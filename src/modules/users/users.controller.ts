@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   NotFoundException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -34,7 +35,9 @@ export class UsersController {
 
   @Get(':id')
   @ApiOkResponse({ type: UserEntity })
-  async getUserById(@Param('id') id: number): Promise<UserEntity> {
+  async getUserById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<UserEntity> {
     const user = await this.usersService.user({ id: id });
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -45,7 +48,7 @@ export class UsersController {
   @Patch(':id')
   @ApiOkResponse({ type: UserEntity })
   async updateUserById(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserEntity> {
     return this.usersService.updateUser({
@@ -56,7 +59,9 @@ export class UsersController {
 
   @Delete(':id')
   @ApiOkResponse({ type: UserEntity })
-  async deleteUserById(@Param('id') id: number): Promise<UserEntity> {
+  async deleteUserById(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<UserEntity> {
     return this.usersService.deleteUser({ id });
   }
 }
