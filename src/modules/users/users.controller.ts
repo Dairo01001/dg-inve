@@ -13,24 +13,33 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 @Controller('users')
+@ApiTags('Users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @ApiCreatedResponse({ type: UserEntity })
   async signupUser(@Body() createUserDto: CreateUserDto): Promise<UserEntity> {
-    return this.usersService.createUser(createUserDto);
+    const { roleId, ...user } = createUserDto;
+    return new UserEntity(
+      await this.usersService.createUser({
+        ...user,
+        role: { connect: { id: roleId } },
+      }),
+    );
   }
 
   @Get()
   @ApiOkResponse({ type: [UserEntity] })
   async getUsers(): Promise<UserEntity[]> {
-    return this.usersService.users({
+    const users = await this.usersService.users({
       orderBy: { createdAt: 'desc' },
     });
+
+    return users.map(user => new UserEntity(user));
   }
 
   @Get(':id')
@@ -42,7 +51,7 @@ export class UsersController {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return user;
+    return new UserEntity(user);
   }
 
   @Patch(':id')
@@ -51,10 +60,12 @@ export class UsersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserEntity> {
-    return this.usersService.updateUser({
-      where: { id },
-      data: updateUserDto,
-    });
+    return new UserEntity(
+      await this.usersService.updateUser({
+        where: { id },
+        data: updateUserDto,
+      }),
+    );
   }
 
   @Delete(':id')
@@ -62,6 +73,6 @@ export class UsersController {
   async deleteUserById(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<UserEntity> {
-    return this.usersService.deleteUser({ id });
+    return new UserEntity(await this.usersService.deleteUser({ id }));
   }
 }

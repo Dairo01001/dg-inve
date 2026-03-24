@@ -11,6 +11,7 @@ export class UsersService {
   ): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: userWhereUniqueInput,
+      include: { role: true },
     });
   }
 
